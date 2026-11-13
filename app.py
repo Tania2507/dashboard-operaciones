@@ -52,6 +52,7 @@ with st.expander("🔒 Actualizar información"):
             )
 
     elif password != "":
+
         st.error(
             "❌ Contraseña incorrecta"
         )
@@ -63,9 +64,11 @@ with st.expander("🔒 Actualizar información"):
 if not os.path.exists(
     ARCHIVO_GUARDADO
 ):
+
     st.warning(
         "Aún no se ha cargado ningún archivo."
     )
+
     st.stop()
 
 # ==================================
@@ -75,6 +78,59 @@ if not os.path.exists(
 df = pd.read_excel(
     ARCHIVO_GUARDADO
 )
+
+# Copia para tendencia histórica
+df_original = df.copy()
+
+# ==================================
+# FECHA RADICADO Y FILTRO
+# ==================================
+
+if "Fecha Radicado" in df.columns:
+
+    df["Fecha Radicado"] = pd.to_datetime(
+        df["Fecha Radicado"],
+        errors="coerce"
+    )
+
+    df_original["Fecha Radicado"] = pd.to_datetime(
+        df_original["Fecha Radicado"],
+        errors="coerce"
+    )
+
+    df["Mes Radicado"] = (
+        df["Fecha Radicado"]
+        .dt.strftime("%Y-%m")
+    )
+
+    df_original["Mes Radicado"] = (
+        df_original["Fecha Radicado"]
+        .dt.strftime("%Y-%m")
+    )
+
+    st.sidebar.header("📅 Filtros")
+
+    meses = sorted(
+        df["Mes Radicado"]
+        .dropna()
+        .unique()
+    )
+
+    mes_seleccionado = st.sidebar.selectbox(
+        "Mes de Radicado",
+        ["Todos"] + list(meses)
+    )
+
+    if mes_seleccionado != "Todos":
+
+        df = df[
+            df["Mes Radicado"]
+            == mes_seleccionado
+        ]
+
+        st.info(
+            f"Mostrando información del mes: {mes_seleccionado}"
+        )
 
 # ==================================
 # OPERACIONES
@@ -236,6 +292,36 @@ st.plotly_chart(
     fig,
     use_container_width=True
 )
+
+# ==================================
+# TENDENCIA MENSUAL
+# ==================================
+
+if "Mes Radicado" in df_original.columns:
+
+    st.subheader(
+        "📈 Tendencia Mensual de Radicados"
+    )
+
+    tendencia = (
+        df_original
+        .groupby("Mes Radicado")
+        .size()
+        .reset_index(name="Cantidad")
+    )
+
+    fig_mes = px.bar(
+        tendencia,
+        x="Mes Radicado",
+        y="Cantidad",
+        text="Cantidad",
+        title="Cantidad de Casos por Mes de Radicación"
+    )
+
+    st.plotly_chart(
+        fig_mes,
+        use_container_width=True
+    )
 
 # ==================================
 # TOP 10 OPERACIONES
