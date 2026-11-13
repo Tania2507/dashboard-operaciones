@@ -179,9 +179,13 @@ for col in operaciones + otras_areas:
 # CALCULOS
 # ==================================
 
+# Se adiciona 1 día correspondiente
+# al día de radicación
+
 df["Dias Operaciones"] = (
     df[operaciones]
     .sum(axis=1)
+    .add(1)
     .round(2)
 )
 
@@ -190,6 +194,10 @@ df["Dias Otras Areas"] = (
     .sum(axis=1)
     .round(2)
 )
+
+# Total DC que se mostrará en las tablas
+
+df["Total DC"] = df["Dias Operaciones"]
 
 # ==================================
 # CLASIFICACION
