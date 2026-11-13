@@ -322,51 +322,114 @@ if "Mes Radicado" in df_original.columns:
         fig_mes,
         use_container_width=True
     )
+# ==================================
+# TOTAL DC
+# ==================================
+
+df["Total DC"] = df["Dias Operaciones"]
 
 # ==================================
-# TOP 10 OPERACIONES
+# COLUMNAS A MOSTRAR
 # ==================================
 
-st.subheader(
-    "🚨 Top 10 Casos con Mayor Tiempo en Operaciones"
-)
+columnas_tabla = [
 
-top10 = df.sort_values(
-    by="Dias Operaciones",
-    ascending=False
-).head(10)
+    col for col in [
 
-columnas_top10 = [
-    c for c in [
         "Radicado",
-        "Razon Social",
-        "Dias Operaciones",
-        "Dias Otras Areas"
+        "Fecha Radicado",
+        "Usuario",
+
+        "DC Validacion SARLAFT",
+        "DC Sucursal",
+        "DC Sistemas",
+        "DC Renovacion",
+        "DC Imagine",
+        "DC Configuracion",
+        "DC Expedicion",
+        "DC Actualizacion FCC y Anexos",
+        "DC Pendiente Blanket",
+        "DC Facturacion Vencida",
+        "DC Vigencia Futura",
+        "DC Area Tecnica",
+
+        "Total DC"
+
     ]
-    if c in top10.columns
+
+    if col in df.columns
+
 ]
 
-st.dataframe(
-    top10[columnas_top10],
-    use_container_width=True
-)
 # ==================================
-# CASOS CRITICOS
+# CASOS ENTRE 5 Y 6 DIAS
 # ==================================
 
 st.subheader(
-    "🔴 Casos con Más de 6 Días"
+    "🟡 Casos entre 5 y 6 días en Operaciones"
 )
 
-criticos = df[
+casos_5_6 = df[
+    (df["Dias Operaciones"] > 4)
+    &
+    (df["Dias Operaciones"] <= 6)
+]
+
+if len(casos_5_6) > 0:
+
+    st.dataframe(
+
+        casos_5_6[
+            columnas_tabla
+        ]
+        .sort_values(
+            by="Total DC",
+            ascending=False
+        ),
+
+        use_container_width=True
+
+    )
+
+else:
+
+    st.success(
+        "✅ No existen casos entre 5 y 6 días."
+    )
+
+# ==================================
+# CASOS CON MAS DE 6 DIAS
+# ==================================
+
+st.subheader(
+    "🔴 Casos con más de 6 días en Operaciones"
+)
+
+casos_criticos = df[
     df["Dias Operaciones"] > 6
 ]
 
-st.dataframe(
-    criticos,
-    use_container_width=True
-)
+if len(casos_criticos) > 0:
 
+    st.dataframe(
+
+        casos_criticos[
+            columnas_tabla
+        ]
+        .sort_values(
+            by="Total DC",
+            ascending=False
+        ),
+
+        use_container_width=True
+
+    )
+
+else:
+
+    st.success(
+        "✅ No existen casos mayores a 6 días."
+    )
 # ==================================
 # DESCARGA
 # ==================================
