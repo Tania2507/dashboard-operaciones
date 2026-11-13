@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 ARCHIVO_GUARDADO = "ultimo_archivo.xlsx"
-PASSWORD = "Operaciones2026"
+PASSWORD = st.secrets["PASSWORD"]
 
 st.title("📊 Panel de Control Operaciones")
 
