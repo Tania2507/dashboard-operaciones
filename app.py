@@ -350,26 +350,6 @@ st.dataframe(
     top10[columnas_top10],
     use_container_width=True
 )
-
-# ==================================
-# GRAFICO TOP 10
-# ==================================
-
-if "Radicado" in top10.columns:
-
-    fig2 = px.bar(
-        top10,
-        x="Radicado",
-        y="Dias Operaciones",
-        text="Dias Operaciones",
-        title="Top 10 Casos con Mayor Tiempo"
-    )
-
-    st.plotly_chart(
-        fig2,
-        use_container_width=True
-    )
-
 # ==================================
 # CASOS CRITICOS
 # ==================================
