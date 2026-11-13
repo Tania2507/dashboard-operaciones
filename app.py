@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from io import BytesIO
+import os
 
 # ==================================
-# CONFIGURACION PAGINA
+# CONFIGURACION
 # ==================================
 
 st.set_page_config(
@@ -12,348 +13,313 @@ st.set_page_config(
     layout="wide"
 )
 
+ARCHIVO_GUARDADO = "ultimo_archivo.xlsx"
+PASSWORD = "Operaciones2026"
+
 st.title("📊 Panel de Control Operaciones")
 
 # ==================================
-# CONTRASEÑA
+# ACTUALIZAR ARCHIVO
 # ==================================
 
-PASSWORD = "Operaciones2026"
+with st.expander("🔒 Actualizar información"):
 
-password = st.text_input(
-    "🔐 Ingrese la contraseña",
-    type="password"
-)
+    password = st.text_input(
+        "Ingrese contraseña para cargar un nuevo archivo",
+        type="password"
+    )
 
-if password != PASSWORD:
+    if password == PASSWORD:
+
+        nuevo_archivo = st.file_uploader(
+            "Seleccione el archivo Excel",
+            type=["xlsx"]
+        )
+
+        if nuevo_archivo:
+
+            with open(
+                ARCHIVO_GUARDADO,
+                "wb"
+            ) as f:
+
+                f.write(
+                    nuevo_archivo.getbuffer()
+                )
+
+            st.success(
+                "✅ Archivo actualizado correctamente"
+            )
+
+    elif password != "":
+        st.error(
+            "❌ Contraseña incorrecta"
+        )
+
+# ==================================
+# VALIDAR EXISTENCIA
+# ==================================
+
+if not os.path.exists(
+    ARCHIVO_GUARDADO
+):
     st.warning(
-        "Debe ingresar una contraseña válida para acceder al tablero."
+        "Aún no se ha cargado ningún archivo."
     )
     st.stop()
 
 # ==================================
-# MENSAJE
+# LEER ARCHIVO GUARDADO
 # ==================================
 
-st.markdown("""
-### Bienvenido
-
-Cargue el reporte de Zehux para visualizar:
-
-✅ Casos entre 1 y 4 días
-
-✅ Casos entre 5 y 6 días
-
-✅ Casos con más de 6 días
-
-✅ Días en Operaciones
-
-✅ Días en Otras Áreas
-""")
-
-# ==================================
-# CARGA ARCHIVO
-# ==================================
-
-archivo = st.file_uploader(
-    "📂 Cargar archivo Excel",
-    type=["xlsx"]
+df = pd.read_excel(
+    ARCHIVO_GUARDADO
 )
 
-if archivo:
+# ==================================
+# OPERACIONES
+# ==================================
 
-    df = pd.read_excel(archivo)
+operaciones = [
+    "DC Validacion SARLAFT",
+    "DC Renovacion",
+    "DC Configuracion",
+    "DC Expedicion",
+    "DC Imagine"
+]
 
-    st.success("✅ Archivo cargado correctamente")
+# ==================================
+# OTRAS AREAS
+# ==================================
 
-    # ==================================
-    # OPERACIONES
-    # ==================================
+otras_areas = [
+    "DC Facturacion Vencida",
+    "DC Vigencia Futura",
+    "DC Pendiente Blanket",
+    "DC Area Tecnica",
+    "DC Novedades",
+    "DC Actualizacion FCC y Anexos",
+    "DC Analisis Segurabilidad",
+    "DC Analisis Tecnico",
+    "DC Validacion Inicial",
+    "DC Exequiel Familiar"
+]
 
-    operaciones = [
-        "DC Validacion SARLAFT",
-        "DC Renovacion",
-        "DC Configuracion",
-        "DC Expedicion",
-        "DC Imagine"
-    ]
+# ==================================
+# VALIDACION COLUMNAS
+# ==================================
 
-    # ==================================
-    # OTRAS AREAS
-    # ==================================
+for col in operaciones + otras_areas:
 
-    otras_areas = [
-        "DC Facturacion Vencida",
-        "DC Vigencia Futura",
-        "DC Pendiente Blanket",
-        "DC Area Tecnica",
-        "DC Novedades",
-        "DC Actualizacion FCC y Anexos",
-        "DC Analisis Segurabilidad",
-        "DC Analisis Tecnico",
-        "DC Validacion Inicial",
-        "DC Exequiel Familiar"
-    ]
+    if col not in df.columns:
+        df[col] = 0
 
-    # ==================================
-    # VALIDACION DE COLUMNAS
-    # ==================================
+    df[col] = pd.to_numeric(
+        df[col],
+        errors="coerce"
+    ).fillna(0)
 
-    for col in operaciones + otras_areas:
+# ==================================
+# CALCULOS
+# ==================================
 
-        if col not in df.columns:
-            df[col] = 0
+df["Dias Operaciones"] = (
+    df[operaciones]
+    .sum(axis=1)
+    .round(2)
+)
 
-        df[col] = pd.to_numeric(
-            df[col],
-            errors="coerce"
-        ).fillna(0)
+df["Dias Otras Areas"] = (
+    df[otras_areas]
+    .sum(axis=1)
+    .round(2)
+)
 
-    # ==================================
-    # CALCULOS
-    # ==================================
+# ==================================
+# CLASIFICACION
+# ==================================
 
-    df["Dias Operaciones"] = (
-        df[operaciones]
-        .sum(axis=1)
-        .round(2)
-    )
+def clasificar(dias):
 
-    df["Dias Otras Areas"] = (
-        df[otras_areas]
-        .sum(axis=1)
-        .round(2)
-    )
+    if dias <= 4:
+        return "🟢 1 a 4 días"
 
-    # ==================================
-    # CLASIFICACION
-    # ==================================
+    elif dias <= 6:
+        return "🟡 5 a 6 días"
 
-    def clasificar(dias):
+    else:
+        return "🔴 Más de 6 días"
 
-        if dias <= 4:
-            return "🟢 1 a 4 días"
+df["Clasificacion"] = (
+    df["Dias Operaciones"]
+    .apply(clasificar)
+)
 
-        elif dias <= 6:
-            return "🟡 5 a 6 días"
+# ==================================
+# INDICADORES
+# ==================================
 
-        else:
-            return "🔴 Más de 6 días"
+total_casos = len(df)
 
-    df["Clasificacion"] = df[
-        "Dias Operaciones"
-    ].apply(clasificar)
+casos_1_4 = len(
+    df[df["Clasificacion"] == "🟢 1 a 4 días"]
+)
 
-    # ==================================
-    # INDICADORES
-    # ==================================
+casos_5_6 = len(
+    df[df["Clasificacion"] == "🟡 5 a 6 días"]
+)
 
-    total_casos = len(df)
+casos_mas_6 = len(
+    df[df["Clasificacion"] == "🔴 Más de 6 días"]
+)
 
-    casos_1_4 = len(
-        df[
-            df["Clasificacion"]
-            == "🟢 1 a 4 días"
-        ]
-    )
+cumplimiento = round(
+    (casos_1_4 / total_casos) * 100,
+    2
+) if total_casos > 0 else 0
 
-    casos_5_6 = len(
-        df[
-            df["Clasificacion"]
-            == "🟡 5 a 6 días"
-        ]
-    )
+c1, c2, c3, c4, c5 = st.columns(5)
 
-    casos_mas_6 = len(
-        df[
-            df["Clasificacion"]
-            == "🔴 Más de 6 días"
-        ]
-    )
+c1.metric(
+    "Total Casos",
+    total_casos
+)
 
-    cumplimiento = round(
-        (
-            casos_1_4 / total_casos
-        ) * 100,
-        2
-    ) if total_casos > 0 else 0
+c2.metric(
+    "🟢 Casos 1-4 días",
+    casos_1_4
+)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+c3.metric(
+    "🟡 Casos 5-6 días",
+    casos_5_6
+)
 
-    col1.metric(
-        "Total Casos",
-        total_casos
-    )
+c4.metric(
+    "🔴 Casos > 6 días",
+    casos_mas_6
+)
 
-    col2.metric(
-        "🟢 Casos 1-4 días",
-        casos_1_4
-    )
+c5.metric(
+    "% Cumplimiento",
+    f"{cumplimiento}%"
+)
 
-    col3.metric(
-        "🟡 Casos 5-6 días",
-        casos_5_6
-    )
+st.divider()
 
-    col4.metric(
-        "🔴 Casos > 6 días",
+# ==================================
+# GRAFICO DONA
+# ==================================
+
+resumen = pd.DataFrame({
+    "Clasificacion": [
+        "🟢 1 a 4 días",
+        "🟡 5 a 6 días",
+        "🔴 Más de 6 días"
+    ],
+    "Cantidad": [
+        casos_1_4,
+        casos_5_6,
         casos_mas_6
-    )
+    ]
+})
 
-    col5.metric(
-        "% Cumplimiento",
-        f"{cumplimiento}%"
-    )
+fig = px.pie(
+    resumen,
+    names="Clasificacion",
+    values="Cantidad",
+    hole=0.55,
+    title="Distribución de Casos"
+)
 
-    st.divider()
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
 
-    # ==================================
-    # GRAFICO DONA
-    # ==================================
+# ==================================
+# TOP 10 OPERACIONES
+# ==================================
 
-    resumen = pd.DataFrame({
-        "Clasificacion": [
-            "🟢 1 a 4 días",
-            "🟡 5 a 6 días",
-            "🔴 Más de 6 días"
-        ],
-        "Cantidad": [
-            casos_1_4,
-            casos_5_6,
-            casos_mas_6
-        ]
-    })
+st.subheader(
+    "🚨 Top 10 Casos con Mayor Tiempo en Operaciones"
+)
 
-    fig = px.pie(
-        resumen,
-        names="Clasificacion",
-        values="Cantidad",
-        hole=0.55,
-        title="Distribución de Casos por Rango"
+top10 = df.sort_values(
+    by="Dias Operaciones",
+    ascending=False
+).head(10)
+
+columnas_top10 = [
+    c for c in [
+        "Radicado",
+        "Razon Social",
+        "Dias Operaciones",
+        "Dias Otras Areas"
+    ]
+    if c in top10.columns
+]
+
+st.dataframe(
+    top10[columnas_top10],
+    use_container_width=True
+)
+
+# ==================================
+# GRAFICO TOP 10
+# ==================================
+
+if "Radicado" in top10.columns:
+
+    fig2 = px.bar(
+        top10,
+        x="Radicado",
+        y="Dias Operaciones",
+        text="Dias Operaciones",
+        title="Top 10 Casos con Mayor Tiempo"
     )
 
     st.plotly_chart(
-        fig,
+        fig2,
         use_container_width=True
     )
 
-    # ==================================
-    # TOP 10 OPERACIONES
-    # ==================================
+# ==================================
+# CASOS CRITICOS
+# ==================================
 
-    st.subheader(
-        "🚨 Top 10 Casos con Mayor Tiempo en Operaciones"
+st.subheader(
+    "🔴 Casos con Más de 6 Días"
+)
+
+criticos = df[
+    df["Dias Operaciones"] > 6
+]
+
+st.dataframe(
+    criticos,
+    use_container_width=True
+)
+
+# ==================================
+# DESCARGA
+# ==================================
+
+salida = BytesIO()
+
+with pd.ExcelWriter(
+    salida,
+    engine="openpyxl"
+) as writer:
+
+    df.to_excel(
+        writer,
+        index=False,
+        sheet_name="Resultados"
     )
 
-    top10 = df.sort_values(
-        by="Dias Operaciones",
-        ascending=False
-    ).head(10)
-
-    columnas_top10 = [
-        c for c in [
-            "Radicado",
-            "Razon Social",
-            "Dias Operaciones",
-            "Dias Otras Areas"
-        ]
-        if c in df.columns
-    ]
-
-    st.dataframe(
-        top10[columnas_top10],
-        use_container_width=True
-    )
-
-    if "Radicado" in top10.columns:
-
-        fig2 = px.bar(
-            top10,
-            x="Radicado",
-            y="Dias Operaciones",
-            text="Dias Operaciones",
-            title="Top 10 Casos con Mayor Tiempo en Operaciones"
-        )
-
-        st.plotly_chart(
-            fig2,
-            use_container_width=True
-        )
-
-    st.divider()
-
-    # ==================================
-    # CASOS CRITICOS
-    # ==================================
-
-    st.subheader(
-        "🔴 Casos con Más de 6 Días"
-    )
-
-    criticos = df[
-        df["Dias Operaciones"] > 6
-    ]
-
-    if len(criticos) > 0:
-
-        columnas_criticos = [
-            c for c in [
-                "Radicado",
-                "Razon Social",
-                "Fecha Radicado",
-                "Fecha Asignacion",
-                "Dias Operaciones",
-                "Dias Otras Areas"
-            ]
-            if c in df.columns
-        ]
-
-        st.dataframe(
-            criticos[columnas_criticos],
-            use_container_width=True
-        )
-
-    else:
-
-        st.success(
-            "✅ No existen casos mayores a 6 días."
-        )
-
-    st.divider()
-
-    # ==================================
-    # RESULTADOS
-    # ==================================
-
-    st.subheader(
-        "📋 Archivo Procesado"
-    )
-
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
-
-    # ==================================
-    # DESCARGAR EXCEL
-    # ==================================
-
-    archivo_salida = BytesIO()
-
-    with pd.ExcelWriter(
-        archivo_salida,
-        engine="openpyxl"
-    ) as writer:
-
-        df.to_excel(
-            writer,
-            sheet_name="Resultados",
-            index=False
-        )
-
-    st.download_button(
-        label="📥 Descargar Excel Procesado",
-        data=archivo_salida.getvalue(),
-        file_name="Resultado_Operaciones.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+st.download_button(
+    "📥 Descargar Excel Procesado",
+    salida.getvalue(),
+    "Resultado_Operaciones.xlsx"
+)
