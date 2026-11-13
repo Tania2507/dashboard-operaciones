@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(
-    page_title="Dashboard Operaciones",
+    page_title="Panel de control de operaciones",
     layout="wide"
 )
 
-st.title("📊 Dashboard Operaciones")
+st.title("📊 Panel de control de operaciones")
 
 archivo = st.file_uploader(
     "Cargar archivo Excel",
@@ -19,7 +19,7 @@ if archivo:
 
     st.success("Archivo cargado correctamente")
 
-    st.write("Vista previa")
+    st.subheader("Vista previa")
 
     st.dataframe(df.head())
 
