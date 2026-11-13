@@ -3,6 +3,10 @@ import pandas as pd
 import plotly.express as px
 from io import BytesIO
 
+# ==================================
+# CONFIGURACION PAGINA
+# ==================================
+
 st.set_page_config(
     page_title="Panel de Control Operaciones",
     layout="wide"
@@ -10,40 +14,54 @@ st.set_page_config(
 
 st.title("📊 Panel de Control Operaciones")
 
-st.markdown(
-    """
-    Cargue el reporte de Zehux para visualizar:
-    - Casos entre 1 y 4 días
-    - Casos entre 5 y 6 días
-    - Casos con más de 6 días
-    - Días en Operaciones
-    - Días en Otras Áreas
-    """
-)
+st.markdown("""
+Cargue el reporte de Zehux para visualizar:
+
+✅ Casos entre 1 y 4 días
+
+✅ Casos entre 5 y 6 días
+
+✅ Casos con más de 6 días
+
+✅ Días en Operaciones
+
+✅ Días en Otras Áreas
+""")
+
+# ==================================
+# CARGA ARCHIVO
+# ==================================
 
 archivo = st.file_uploader(
     "Cargar archivo Excel",
     type=["xlsx"]
 )
 
+# ==================================
+# PROCESAMIENTO
+# ==================================
+
 if archivo:
 
     df = pd.read_excel(archivo)
 
-    # ============================
-    # COLUMNAS OPERACIONES
-    # ============================
+    st.success("Archivo cargado correctamente")
+
+    # ==========================
+    # OPERACIONES
+    # ==========================
 
     operaciones = [
         "DC Validacion SARLAFT",
         "DC Renovacion",
         "DC Configuracion",
-        "DC Expedicion"
+        "DC Expedicion",
+        "DC Imagine"
     ]
 
-    # ============================
-    # COLUMNAS OTRAS AREAS
-    # ============================
+    # ==========================
+    # OTRAS AREAS
+    # ==========================
 
     otras_areas = [
         "DC Facturacion Vencida",
@@ -58,21 +76,23 @@ if archivo:
         "DC Exequiel Familiar"
     ]
 
-    # Crear columnas faltantes en caso de que no existan
+    # ==========================
+    # VALIDAR COLUMNAS
+    # ==========================
+
     for col in operaciones + otras_areas:
+
         if col not in df.columns:
             df[col] = 0
 
-    # Convertir a numérico
-    for col in operaciones + otras_areas:
         df[col] = pd.to_numeric(
             df[col],
             errors="coerce"
         ).fillna(0)
 
-    # ============================
+    # ==========================
     # CALCULOS
-    # ============================
+    # ==========================
 
     df["Dias Operaciones"] = (
         df[operaciones]
@@ -86,11 +106,11 @@ if archivo:
         .round(2)
     )
 
-    # ============================
+    # ==========================
     # CLASIFICACION
-    # ============================
+    # ==========================
 
-    def clasificacion(dias):
+    def clasificar(dias):
 
         if dias <= 4:
             return "🟢 1 a 4 días"
@@ -101,35 +121,43 @@ if archivo:
         else:
             return "🔴 Más de 6 días"
 
-    df["Clasificacion"] = (
-        df["Dias Operaciones"]
-        .apply(clasificacion)
-    )
+    df["Clasificacion"] = df[
+        "Dias Operaciones"
+    ].apply(clasificar)
 
-    # ============================
+    # ==========================
     # INDICADORES
-    # ============================
+    # ==========================
 
     total_casos = len(df)
 
     casos_1_4 = len(
-        df[df["Clasificacion"] == "🟢 1 a 4 días"]
+        df[
+            df["Clasificacion"]
+            == "🟢 1 a 4 días"
+        ]
     )
 
     casos_5_6 = len(
-        df[df["Clasificacion"] == "🟡 5 a 6 días"]
+        df[
+            df["Clasificacion"]
+            == "🟡 5 a 6 días"
+        ]
     )
 
     casos_mas_6 = len(
-        df[df["Clasificacion"] == "🔴 Más de 6 días"]
+        df[
+            df["Clasificacion"]
+            == "🔴 Más de 6 días"
+        ]
     )
 
     cumplimiento = round(
-        (casos_1_4 / total_casos) * 100,
+        (
+            casos_1_4 / total_casos
+        ) * 100,
         2
     ) if total_casos > 0 else 0
-
-    st.success("Archivo cargado correctamente")
 
     col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -139,17 +167,17 @@ if archivo:
     )
 
     col2.metric(
-        "🟢 1 a 4 días",
+        "🟢 Casos 1-4 días",
         casos_1_4
     )
 
     col3.metric(
-        "🟡 5 a 6 días",
+        "🟡 Casos 5-6 días",
         casos_5_6
     )
 
     col4.metric(
-        "🔴 Más de 6 días",
+        "🔴 Casos > 6 días",
         casos_mas_6
     )
 
@@ -160,9 +188,9 @@ if archivo:
 
     st.divider()
 
-    # ============================
+    # ==========================
     # GRAFICO DONA
-    # ============================
+    # ==========================
 
     resumen = pd.DataFrame({
         "Clasificacion": [
@@ -182,7 +210,7 @@ if archivo:
         names="Clasificacion",
         values="Cantidad",
         hole=0.55,
-        title="Distribución de Casos por Rango de Días"
+        title="Distribución de Casos por Rango"
     )
 
     st.plotly_chart(
@@ -190,57 +218,108 @@ if archivo:
         use_container_width=True
     )
 
-    # ============================
-    # CASOS CRITICOS
-    # ============================
+    # ==========================
+    # TOP 10 CRITICOS
+    # ==========================
 
-    st.subheader("🚨 Casos con más de 6 días en Operaciones")
+    st.subheader(
+        "🚨 Top 10 Casos con Mayor Tiempo en Operaciones"
+    )
 
-    casos_criticos = df[
-        df["Dias Operaciones"] > 6
-    ].copy()
+    top10 = df.sort_values(
+        by="Dias Operaciones",
+        ascending=False
+    ).head(10)
 
-    if len(casos_criticos) > 0:
-
-        columnas_mostrar = []
-
-        for col in [
+    columnas_top10 = [
+        c for c in [
             "Radicado",
             "Razon Social",
-            "Fecha Radicado",
-            "Fecha Asignacion",
             "Dias Operaciones",
             "Dias Otras Areas"
-        ]:
-            if col in casos_criticos.columns:
-                columnas_mostrar.append(col)
+        ]
+        if c in df.columns
+    ]
+
+    st.dataframe(
+        top10[columnas_top10],
+        use_container_width=True
+    )
+
+    # ==========================
+    # GRAFICO BARRAS TOP 10
+    # ==========================
+
+    if "Radicado" in top10.columns:
+
+        fig2 = px.bar(
+            top10,
+            x="Radicado",
+            y="Dias Operaciones",
+            title="Top 10 Casos con Mayor Tiempo en Operaciones",
+            text="Dias Operaciones"
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+    # ==========================
+    # CASOS CRITICOS
+    # ==========================
+
+    st.subheader(
+        "🔴 Casos con Más de 6 Días"
+    )
+
+    criticos = df[
+        df["Dias Operaciones"] > 6
+    ]
+
+    if len(criticos) > 0:
+
+        columnas_criticos = [
+            c for c in [
+                "Radicado",
+                "Razon Social",
+                "Fecha Radicado",
+                "Fecha Asignacion",
+                "Dias Operaciones",
+                "Dias Otras Areas"
+            ]
+            if c in df.columns
+        ]
 
         st.dataframe(
-            casos_criticos[columnas_mostrar],
+            criticos[columnas_criticos],
             use_container_width=True
         )
 
     else:
+
         st.success(
             "No existen casos mayores a 6 días."
         )
 
     st.divider()
 
-    # ============================
-    # ARCHIVO PROCESADO
-    # ============================
+    # ==========================
+    # VISTA RESULTADOS
+    # ==========================
 
-    st.subheader("📋 Archivo Procesado")
+    st.subheader(
+        "📋 Archivo Procesado"
+    )
 
     st.dataframe(
         df,
         use_container_width=True
     )
 
-    # ============================
-    # DESCARGAR EXCEL
-    # ============================
+    # ==========================
+    # EXPORTAR EXCEL
+    # ==========================
 
     archivo_salida = BytesIO()
 
