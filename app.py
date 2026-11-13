@@ -14,7 +14,30 @@ st.set_page_config(
 
 st.title("📊 Panel de Control Operaciones")
 
+# ==================================
+# CONTRASEÑA
+# ==================================
+
+PASSWORD = "Operaciones2026"
+
+password = st.text_input(
+    "🔐 Ingrese la contraseña",
+    type="password"
+)
+
+if password != PASSWORD:
+    st.warning(
+        "Debe ingresar una contraseña válida para acceder al tablero."
+    )
+    st.stop()
+
+# ==================================
+# MENSAJE
+# ==================================
+
 st.markdown("""
+### Bienvenido
+
 Cargue el reporte de Zehux para visualizar:
 
 ✅ Casos entre 1 y 4 días
@@ -33,23 +56,19 @@ Cargue el reporte de Zehux para visualizar:
 # ==================================
 
 archivo = st.file_uploader(
-    "Cargar archivo Excel",
+    "📂 Cargar archivo Excel",
     type=["xlsx"]
 )
-
-# ==================================
-# PROCESAMIENTO
-# ==================================
 
 if archivo:
 
     df = pd.read_excel(archivo)
 
-    st.success("Archivo cargado correctamente")
+    st.success("✅ Archivo cargado correctamente")
 
-    # ==========================
+    # ==================================
     # OPERACIONES
-    # ==========================
+    # ==================================
 
     operaciones = [
         "DC Validacion SARLAFT",
@@ -59,9 +78,9 @@ if archivo:
         "DC Imagine"
     ]
 
-    # ==========================
+    # ==================================
     # OTRAS AREAS
-    # ==========================
+    # ==================================
 
     otras_areas = [
         "DC Facturacion Vencida",
@@ -76,9 +95,9 @@ if archivo:
         "DC Exequiel Familiar"
     ]
 
-    # ==========================
-    # VALIDAR COLUMNAS
-    # ==========================
+    # ==================================
+    # VALIDACION DE COLUMNAS
+    # ==================================
 
     for col in operaciones + otras_areas:
 
@@ -90,9 +109,9 @@ if archivo:
             errors="coerce"
         ).fillna(0)
 
-    # ==========================
+    # ==================================
     # CALCULOS
-    # ==========================
+    # ==================================
 
     df["Dias Operaciones"] = (
         df[operaciones]
@@ -106,9 +125,9 @@ if archivo:
         .round(2)
     )
 
-    # ==========================
+    # ==================================
     # CLASIFICACION
-    # ==========================
+    # ==================================
 
     def clasificar(dias):
 
@@ -125,9 +144,9 @@ if archivo:
         "Dias Operaciones"
     ].apply(clasificar)
 
-    # ==========================
+    # ==================================
     # INDICADORES
-    # ==========================
+    # ==================================
 
     total_casos = len(df)
 
@@ -188,9 +207,9 @@ if archivo:
 
     st.divider()
 
-    # ==========================
+    # ==================================
     # GRAFICO DONA
-    # ==========================
+    # ==================================
 
     resumen = pd.DataFrame({
         "Clasificacion": [
@@ -218,9 +237,9 @@ if archivo:
         use_container_width=True
     )
 
-    # ==========================
-    # TOP 10 CRITICOS
-    # ==========================
+    # ==================================
+    # TOP 10 OPERACIONES
+    # ==================================
 
     st.subheader(
         "🚨 Top 10 Casos con Mayor Tiempo en Operaciones"
@@ -246,18 +265,14 @@ if archivo:
         use_container_width=True
     )
 
-    # ==========================
-    # GRAFICO BARRAS TOP 10
-    # ==========================
-
     if "Radicado" in top10.columns:
 
         fig2 = px.bar(
             top10,
             x="Radicado",
             y="Dias Operaciones",
-            title="Top 10 Casos con Mayor Tiempo en Operaciones",
-            text="Dias Operaciones"
+            text="Dias Operaciones",
+            title="Top 10 Casos con Mayor Tiempo en Operaciones"
         )
 
         st.plotly_chart(
@@ -265,9 +280,11 @@ if archivo:
             use_container_width=True
         )
 
-    # ==========================
+    st.divider()
+
+    # ==================================
     # CASOS CRITICOS
-    # ==========================
+    # ==================================
 
     st.subheader(
         "🔴 Casos con Más de 6 Días"
@@ -299,14 +316,14 @@ if archivo:
     else:
 
         st.success(
-            "No existen casos mayores a 6 días."
+            "✅ No existen casos mayores a 6 días."
         )
 
     st.divider()
 
-    # ==========================
-    # VISTA RESULTADOS
-    # ==========================
+    # ==================================
+    # RESULTADOS
+    # ==================================
 
     st.subheader(
         "📋 Archivo Procesado"
@@ -317,9 +334,9 @@ if archivo:
         use_container_width=True
     )
 
-    # ==========================
-    # EXPORTAR EXCEL
-    # ==========================
+    # ==================================
+    # DESCARGAR EXCEL
+    # ==================================
 
     archivo_salida = BytesIO()
 
