@@ -1,5 +1,5 @@
 import streamlit as st
 
-st.title("Dashboard Operaciones")
+st.title("📊 Dashboard Operaciones")
 
-st.success("Aplicación funcionando correctamente")
+st.success("La aplicación está funcionando correctamente")
