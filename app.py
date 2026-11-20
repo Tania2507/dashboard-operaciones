@@ -219,56 +219,52 @@ df["Clasificacion"] = (
     .apply(clasificar)
 )
 
-# ==================================
-# INDICADORES
-# ==================================
+st.subheader("✅ Casos Finalizados")
 
-total_casos = len(df)
-
-casos_1_4 = len(
-    df[df["Clasificacion"] == "🟢 1 a 4 días"]
-)
-
-casos_5_6 = len(
-    df[df["Clasificacion"] == "🟡 5 a 6 días"]
-)
-
-casos_mas_6 = len(
-    df[df["Clasificacion"] == "🔴 Más de 6 días"]
-)
-
-cumplimiento = round(
-    (casos_1_4 / total_casos) * 100,
-    2
-) if total_casos > 0 else 0
-
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4 = st.columns(4)
 
 c1.metric(
-    "Total Casos",
-    total_casos
+    "Total Finalizados",
+    len(df_finalizados)
 )
 
 c2.metric(
-    "🟢 Casos 1-4 días",
-    casos_1_4
+    "🟢 1-4 días",
+    len(df_finalizados[df_finalizados["Clasificacion"] == "🟢 1 a 4 días"])
 )
 
 c3.metric(
-    "🟡 Casos 5-6 días",
-    casos_5_6
+    "🟡 5-6 días",
+    len(df_finalizados[df_finalizados["Clasificacion"] == "🟡 5 a 6 días"])
 )
 
 c4.metric(
-    "🔴 Casos > 6 días",
-    casos_mas_6
+    "🔴 > 6 días",
+    len(df_finalizados[df_finalizados["Clasificacion"] == "🔴 Más de 6 días"])
+)
+st.subheader("📂 Casos Abiertos y Devueltos")
+
+c1, c2, c3, c4 = st.columns(4)
+
+c1.metric(
+    "Total Abiertos/Devueltos",
+    len(df_pendientes)
 )
 
-c5.metric(
-    "% Cumplimiento",
-    f"{cumplimiento}%"
+c2.metric(
+    "🟢 1-4 días",
+    len(df_pendientes[df_pendientes["Clasificacion"] == "🟢 1 a 4 días"])
 )
 
+c3.metric(
+    "🟡 5-6 días",
+    len(df_pendientes[df_pendientes["Clasificacion"] == "🟡 5 a 6 días"])
+)
+
+c4.metric(
+    "🔴 > 6 días",
+    len(df_pendientes[df_pendientes["Clasificacion"] == "🔴 Más de 6 días"])
+)
 st.divider()
 # ==================================
 # FILTRO POR ESTADO (COLUMNA AN)
