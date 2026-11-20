@@ -218,7 +218,27 @@ df["Clasificacion"] = (
     df["Dias Operaciones"]
     .apply(clasificar)
 )
+# ==================================
+# FILTRO POR ESTADO (COLUMNA AN)
+# ==================================
 
+col_estado = df.columns[39]  # AN
+
+df_finalizados = df[
+    df[col_estado]
+    .astype(str)
+    .str.upper()
+    .str.strip()
+    == "FINALIZADO"
+]
+
+df_pendientes = df[
+    df[col_estado]
+    .astype(str)
+    .str.upper()
+    .str.strip()
+    .isin(["ABIERTO", "DEVUELTO"])
+]
 st.subheader("✅ Casos Finalizados")
 
 c1, c2, c3, c4 = st.columns(4)
@@ -266,27 +286,7 @@ c4.metric(
     len(df_pendientes[df_pendientes["Clasificacion"] == "🔴 Más de 6 días"])
 )
 st.divider()
-# ==================================
-# FILTRO POR ESTADO (COLUMNA AN)
-# ==================================
 
-col_estado = df.columns[39]  # AN
-
-df_finalizados = df[
-    df[col_estado]
-    .astype(str)
-    .str.upper()
-    .str.strip()
-    == "FINALIZADO"
-]
-
-df_pendientes = df[
-    df[col_estado]
-    .astype(str)
-    .str.upper()
-    .str.strip()
-    .isin(["ABIERTO", "DEVUELTO"])
-]
 # ==================================
 # GRAFICO FINALIZADOS
 # ==================================
