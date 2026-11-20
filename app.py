@@ -284,17 +284,48 @@ df_abiertos = df[
     df[col_estado].astype(str).str.upper().str.strip() == "ABIERTO"
 ]
 # ==================================
-# GRAFICOS POR ESTADO
+# GRAFICO CERRADOS
 # ==================================
+
+resumen_cerrados = pd.DataFrame({
+    "Clasificacion": [
+        "🟢 1 a 4 días",
+        "🟡 5 a 6 días",
+        "🔴 Más de 6 días"
+    ],
+    "Cantidad": [
+        len(df_cerrados[df_cerrados["Clasificacion"] == "🟢 1 a 4 días"]),
+        len(df_cerrados[df_cerrados["Clasificacion"] == "🟡 5 a 6 días"]),
+        len(df_cerrados[df_cerrados["Clasificacion"] == "🔴 Más de 6 días"])
+    ]
+})
+
+# ==================================
+# GRAFICO ABIERTOS
+# ==================================
+
+resumen_abiertos = pd.DataFrame({
+    "Clasificacion": [
+        "🟢 1 a 4 días",
+        "🟡 5 a 6 días",
+        "🔴 Más de 6 días"
+    ],
+    "Cantidad": [
+        len(df_abiertos[df_abiertos["Clasificacion"] == "🟢 1 a 4 días"]),
+        len(df_abiertos[df_abiertos["Clasificacion"] == "🟡 5 a 6 días"]),
+        len(df_abiertos[df_abiertos["Clasificacion"] == "🔴 Más de 6 días"])
+    ]
+})
 
 col1, col2 = st.columns(2)
 
 with col1:
     fig_cerrados = px.pie(
-        names=["Cerrados"],
-        values=[len(df_cerrados)],
+        resumen_cerrados,
+        names="Clasificacion",
+        values="Cantidad",
         hole=0.55,
-        title="Casos Cerrados"
+        title="Distribución Casos Cerrados"
     )
 
     st.plotly_chart(
@@ -304,10 +335,11 @@ with col1:
 
 with col2:
     fig_abiertos = px.pie(
-        names=["Abiertos"],
-        values=[len(df_abiertos)],
+        resumen_abiertos,
+        names="Clasificacion",
+        values="Cantidad",
         hole=0.55,
-        title="Casos Abiertos"
+        title="Distribución Casos Abiertos"
     )
 
     st.plotly_chart(
