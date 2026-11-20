@@ -270,37 +270,50 @@ c5.metric(
 )
 
 st.divider()
-
 # ==================================
-# GRAFICO DONA
+# FILTRAR POR ESTADO (COLUMNA AN)
 # ==================================
 
-resumen = pd.DataFrame({
-    "Clasificacion": [
-        "🟢 1 a 4 días",
-        "🟡 5 a 6 días",
-        "🔴 Más de 6 días"
-    ],
-    "Cantidad": [
-        casos_1_4,
-        casos_5_6,
-        casos_mas_6
-    ]
-})
+col_estado = df.columns[39]  # Columna AN
 
-fig = px.pie(
-    resumen,
-    names="Clasificacion",
-    values="Cantidad",
-    hole=0.55,
-    title="Distribución de Casos"
-)
+df_cerrados = df[
+    df[col_estado].astype(str).str.upper().str.strip() == "CERRADO"
+]
 
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+df_abiertos = df[
+    df[col_estado].astype(str).str.upper().str.strip() == "ABIERTO"
+]
+# ==================================
+# GRAFICOS POR ESTADO
+# ==================================
 
+col1, col2 = st.columns(2)
+
+with col1:
+    fig_cerrados = px.pie(
+        names=["Cerrados"],
+        values=[len(df_cerrados)],
+        hole=0.55,
+        title="Casos Cerrados"
+    )
+
+    st.plotly_chart(
+        fig_cerrados,
+        use_container_width=True
+    )
+
+with col2:
+    fig_abiertos = px.pie(
+        names=["Abiertos"],
+        values=[len(df_abiertos)],
+        hole=0.55,
+        title="Casos Abiertos"
+    )
+
+    st.plotly_chart(
+        fig_abiertos,
+        use_container_width=True
+    )
 # ==================================
 # TENDENCIA MENSUAL
 # ==================================
