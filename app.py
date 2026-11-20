@@ -271,79 +271,87 @@ c5.metric(
 
 st.divider()
 # ==================================
-# FILTRAR POR ESTADO (COLUMNA AN)
+# FILTRO POR ESTADO (COLUMNA AN)
 # ==================================
 
-col_estado = df.columns[39]  # Columna AN
+col_estado = df.columns[39]  # AN
 
-df_cerrados = df[
-    df[col_estado].astype(str).str.upper().str.strip() == "CERRADO"
+df_finalizados = df[
+    df[col_estado]
+    .astype(str)
+    .str.upper()
+    .str.strip()
+    == "FINALIZADO"
 ]
 
-df_abiertos = df[
-    df[col_estado].astype(str).str.upper().str.strip() == "ABIERTO"
+df_pendientes = df[
+    df[col_estado]
+    .astype(str)
+    .str.upper()
+    .str.strip()
+    .isin(["ABIERTO", "DEVUELTO"])
 ]
 # ==================================
-# GRAFICO CERRADOS
+# GRAFICO FINALIZADOS
 # ==================================
 
-resumen_cerrados = pd.DataFrame({
+resumen_finalizados = pd.DataFrame({
     "Clasificacion": [
         "🟢 1 a 4 días",
         "🟡 5 a 6 días",
         "🔴 Más de 6 días"
     ],
     "Cantidad": [
-        len(df_cerrados[df_cerrados["Clasificacion"] == "🟢 1 a 4 días"]),
-        len(df_cerrados[df_cerrados["Clasificacion"] == "🟡 5 a 6 días"]),
-        len(df_cerrados[df_cerrados["Clasificacion"] == "🔴 Más de 6 días"])
+        len(df_finalizados[df_finalizados["Clasificacion"] == "🟢 1 a 4 días"]),
+        len(df_finalizados[df_finalizados["Clasificacion"] == "🟡 5 a 6 días"]),
+        len(df_finalizados[df_finalizados["Clasificacion"] == "🔴 Más de 6 días"])
     ]
 })
 
 # ==================================
-# GRAFICO ABIERTOS
+# GRAFICO ABIERTOS + DEVUELTOS
 # ==================================
 
-resumen_abiertos = pd.DataFrame({
+resumen_pendientes = pd.DataFrame({
     "Clasificacion": [
         "🟢 1 a 4 días",
         "🟡 5 a 6 días",
         "🔴 Más de 6 días"
     ],
     "Cantidad": [
-        len(df_abiertos[df_abiertos["Clasificacion"] == "🟢 1 a 4 días"]),
-        len(df_abiertos[df_abiertos["Clasificacion"] == "🟡 5 a 6 días"]),
-        len(df_abiertos[df_abiertos["Clasificacion"] == "🔴 Más de 6 días"])
+        len(df_pendientes[df_pendientes["Clasificacion"] == "🟢 1 a 4 días"]),
+        len(df_pendientes[df_pendientes["Clasificacion"] == "🟡 5 a 6 días"]),
+        len(df_pendientes[df_pendientes["Clasificacion"] == "🔴 Más de 6 días"])
     ]
 })
 
 col1, col2 = st.columns(2)
 
 with col1:
-    fig_cerrados = px.pie(
-        resumen_cerrados,
+    fig_finalizados = px.pie(
+        resumen_finalizados,
         names="Clasificacion",
         values="Cantidad",
         hole=0.55,
-        title="Distribución Casos Cerrados"
+        title="Distribución Casos Finalizados"
     )
 
     st.plotly_chart(
-        fig_cerrados,
+        fig_finalizados,
         use_container_width=True
     )
 
 with col2:
-    fig_abiertos = px.pie(
-        resumen_abiertos,
+    fig_pendientes = px.pie(
+        resumen_pendientes,
         names="Clasificacion",
         values="Cantidad",
         hole=0.55,
-        title="Distribución Casos Abiertos"
+        title="Distribución Casos Abiertos y Devueltos"
     )
 
     st.plotly_chart(
-        fig_abiertos,
+        fig_pendientes,
         use_container_width=True
     )
 # ==================================
